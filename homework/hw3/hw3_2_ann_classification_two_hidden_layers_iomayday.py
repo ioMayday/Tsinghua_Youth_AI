@@ -87,26 +87,71 @@ def sigmoidGradient(z):
     g = g * (1 - g)  # 根据sigmoid 函数公式写出
     return g  # 返回梯度值
 
+
 def add_row(a):
-    a = np.vstack((np.ones((1, a.shape[1])), a))
+    a = np.vstack((np.ones((1, a.shape[1])), a)) # 将全为1的偏置元素，放置在第一行
     return a
+
+
+# only for this model
+# X：输入样本
+# m：样本个数
+# Wx：每层权重参数
+# 前向传播过程
+def nn_fp_proc(X, W1, W2, W3):
+    m = X.shape[0]  #将输入矩阵X的第一个维度赋予m
+    X_m = np.transpose(np.column_stack((np.ones((m, 1)), X)))  # 为输入矩阵增加一行值为1的偏置
+    a1 = X_m  # 将矩阵X_m赋予a1
+    z2 = np.dot(W1,a1)  #  参数W1与a1做矩阵乘法
+    a2 = sigmoid(z2)  # 对矩阵z2进行做sigmoid激活
+    a2 = add_row(a2)  # 为第一层隐藏层的矩阵a2增加一行值为1的偏置
+    z3 = np.dot(W2,a2)  # 参数W2与a2做矩阵乘法
+    a3 = sigmoid(z3)  # 对矩阵z3做sigmoid激活
+    a3 = add_row(a3)  # 为第二层隐藏层的矩阵a3增加一行值为1的偏置
+    z4 = np.dot(W3,a3)  # 参数W3与a3做矩阵乘法
+    a4 = sigmoid(z4)  # 对矩阵z4做sigmoid激活
+    return a1, a2, a3, a4, z2, z3, z4
+
+
+# 反向传播过程
+def nn_bp_proc(y, m, a1, a2, a3, a4, z2, z3, z4, W1, W2, W3):
+    y_m = np.transpose(np.reshape(y, [-1, 1])) #reshape y_m from (n,)to (1,n)
+    delta4 = a4 - y_m  # 计算delta4，将预测标签向量a4与y_m做差
+    #print(sigmoidGradient(z3).shape)
+    A3 = np.dot(W3.T,delta4) # A3第一行元素为偏置层
+    delta3 = np.multiply(np.delete(A3,0,axis=0),sigmoidGradient(z3)) # 计算delta3，参数矩阵W3转置后与delta4做矩阵乘法，然后与sigmoidGradient(z3)对应位相乘
+    #print(delta3.shape)
+    A2 = np.dot(W2.T,delta3)
+    delta2 = np.multiply(np.delete(A2,0,axis=0),sigmoidGradient(z2))  # 计算delta2，参数矩阵W2转置后与delta3做矩阵乘法，然后与sigmoidGradient(z2)对应位相乘
+    # 计算Dij/Wij
+    delta4 = np.array(delta4)
+    a3 = np.array(a3)
+    # bigDelta3 = delta4 * a3.T # 点乘
+    bigDelta3 = np.dot(delta4, a3.T) # 矩阵乘
+    DW3 = 1./m * bigDelta3
+    bigDelta2 = np.dot(delta3, a2.T)
+    DW2 = 1./m * bigDelta2
+    bigDelta1 = np.dot(delta2, a1.T)
+    DW1 = 1./m * bigDelta1
+    return DW1, DW2, DW3
+
+
+# 反向传播参数更新
+def nn_update_param(W1, W2, W3, DW1, DW2, DW3):
+    W3 += -Config.lr * DW3
+    W2 += -Config.lr * DW2
+    W1 += -Config.lr * DW1
+    return W1, W2, W3
 
 
 # Helper function to evaluate the total loss on the dataset
 # 定义损失函数，计算所有样本的损失值
 def calculate_loss(model, X, y):
-    num_examples = X.shape[1]  # training set size  # X的第二个维度为训练集样本个数
+    num_examples = X.shape[0]  # training set size  # X的第1维度为训练集样本个数
+    # print("num_examples =", num_examples)
     W1, W2, W3,= model['W1'], model['W2'] , model['W3']  # 神经网络为两层隐藏层，对应的参数矩阵分别为W1 W2 W3
     # Forward propagation to calculate our predictions 需要补全
-    a1 = X
-    z2 = np.dot(W1,a1)  #  参数W1与a1做矩阵乘法
-    a2 = sigmoid(z2)  # 对矩阵z2进行做sigmoid激活
-    a2 = add_row(a2)  # 为第一层隐藏层的矩阵a2增加一列值为1的偏置
-    z3 = np.dot(W2,a2)  # 参数W2与a2做矩阵乘法
-    a3 = sigmoid(z3)  # 对矩阵z3做sigmoid激活
-    a3 = add_row(a3)  # 为第二层隐藏层的矩阵a3增加一列值为1的偏置
-    z4 = np.dot(W3,a3)  # 参数W3与a3做矩阵乘法
-    a4 = sigmoid(z4)  # 对矩阵z4做sigmoid激活
+    a1, a2, a3, a4, z2, z3, z4 = nn_fp_proc(X, W1, W2, W3)
 
     # Calculating the loss
     one = np.multiply(y, np.log(a4))  # 将真实标签y与预测值a4的对数值对应相乘
@@ -129,36 +174,17 @@ def compare(X):
 
 # 定义predict预测函数，输入未训练好的模型和特征矩阵X，返回预测值
 def predict(model, X):
-    m = X.shape[0]  # 将输入矩阵的第一个维度赋值给m
     W1, W2, W3= model['W1'], model['W2'] , model['W3']  #  将模型训练好的参数分别赋值给W1 W2 W3
     # Forward propagation 需要补全
-    X_m = np.transpose(np.column_stack((np.ones((m, 1)), X)))  # 为输入矩阵增加一列值为1的偏置
-    a1= X_m  # 将矩阵X_m赋予a1
-    # a1 = X
-    z2 = np.dot(W1,a1)  #  参数W1与a1做矩阵乘法
-    a2 = sigmoid(z2)  # 对矩阵z2进行做sigmoid激活
-    a2 = add_row(a2)  # 为第一层隐藏层的矩阵a2增加一列值为1的偏置
-    z3 = np.dot(W2,a2)  # 参数W2与a2做矩阵乘法
-    a3 = sigmoid(z3)  # 对矩阵z3做sigmoid激活
-    a3 = add_row(a3)  # 为第二层隐藏层的矩阵a3增加一列值为1的偏置
-    z4 = np.dot(W3,a3)  # 参数W3与a3做矩阵乘法
-    a4 = sigmoid(z4)  # 对矩阵z4做sigmoid激活
+    a1, a2, a3, a4, z2, z3, z4 = nn_fp_proc(X, W1, W2, W3)
     return a4  # 返回输出矩阵
 
 
 # 定义precision函数：输入为训练模型，与特征矩阵，目的是返回样本预测结果，正例为1，反例为0
 def precision(model, X):
-    W1, W2, W3= model['W1'], model['W2'],  model['W3']  # 将模型更新后的参数赋值给W1 W2 W3
+    W1, W2, W3 = model['W1'], model['W2'],  model['W3']  # 将模型更新后的参数赋值给W1 W2 W3
     # Forward propagation 需要补全
-    a1 = X
-    z2 = np.dot(W1,a1)  #  参数W1与a1做矩阵乘法
-    a2 = sigmoid(z2)  # 对矩阵z2进行做sigmoid激活
-    a2 = add_row(a2)  # 为第一层隐藏层的矩阵a2增加一列值为1的偏置
-    z3 = np.dot(W2,a2)  # 参数W2与a2做矩阵乘法
-    a3 = sigmoid(z3)  # 对矩阵z3做sigmoid激活
-    a3 = add_row(a3)  # 为第二层隐藏层的矩阵a3增加一列值为1的偏置
-    z4 = np.dot(W3,a3)  # 参数W3与a3做矩阵乘法
-    a4 = sigmoid(z4)  # 对矩阵z4做sigmoid激活
+    a4 = predict(model, X)
     result = compare(a4)  # 调用compare函数，返回预测结果
     return result  #  返回预测结果
 
@@ -172,25 +198,6 @@ def randInitializeWeights(L_in, L_out):
     return W  # 返回参数矩阵
 
 
-# only for this model
-# X：输入样本
-# m：样本个数
-# Wx：每层权重参数
-def nn_fp_proc(X, m, W1, W2, W3):
-    # tbd optmazation
-    X_m = np.transpose(np.column_stack((np.ones((m, 1)), X)))  # 为输入矩阵增加一列值为1的偏置
-    a1 = X_m  # 将矩阵X_m赋予a1
-    z2 = np.dot(W1,a1)  #  参数W1与a1做矩阵乘法
-    a2 = sigmoid(z2)  # 对矩阵z2进行做sigmoid激活
-    a2 = add_row(a2)  # 为第一层隐藏层的矩阵a2增加一列值为1的偏置
-    z3 = np.dot(W2,a2)  # 参数W2与a2做矩阵乘法
-    a3 = sigmoid(z3)  # 对矩阵z3做sigmoid激活
-    a3 = add_row(a3)  # 为第二层隐藏层的矩阵a3增加一列值为1的偏置
-    z4 = np.dot(W3,a3)  # 参数W3与a3做矩阵乘法
-    a4 = sigmoid(z4)  # 对矩阵z4做sigmoid激活
-    return a4
-
-
 # This function learns parameters for the neural network and returns the model.
 # - hidden1_dim: Number of nodes in the hidden layer 1
 # - hidden2_dim: Number of nodes in the hidden layer 2
@@ -201,7 +208,9 @@ def nn_fp_proc(X, m, W1, W2, W3):
 def build_model(X, y, hidden1_dim, hidden2_dim, iterNum=2000, print_loss=False):
     # Initialize the parameters to random values. We need to learn these.
     m = X.shape[0]  #将输入矩阵X的第一个维度赋予m
-    
+    X_m = np.transpose(np.column_stack((np.ones((m, 1)), X)))  # 为输入矩阵增加一行值为1的偏置
+    y_m = np.transpose(np.reshape(y, [-1, 1])) # 实际输出label维度调整，reshape y_m from (n,)to (1,n)
+
     W1 = randInitializeWeights(Config.input_dim, hidden1_dim)  # 调用randInitializeWeights函数，初始化W1
     W2 = randInitializeWeights(hidden1_dim, hidden2_dim)  # 调用randInitializeWeights函数，初始化W2
     W3 = randInitializeWeights(hidden2_dim, Config.output_dim)  # 调用randInitializeWeights函数，初始化W3
@@ -213,60 +222,27 @@ def build_model(X, y, hidden1_dim, hidden2_dim, iterNum=2000, print_loss=False):
     logFile = open(logName, "w")  # 调用open函数,打开文件，模式为写
     for t in range(0, iterNum):  # 从0循环至iterNum
         # Forward propagation 需要补全
-        # a输出在回溯计算时需要用到，最好设成全局变量，再提炼到函数里
-        X_m = np.transpose(np.column_stack((np.ones((m, 1)), X)))  # 为输入矩阵增加一列值为1的偏置
-        a1 = X_m  # 将矩阵X_m赋予a1
-        z2 = np.dot(W1,a1)  #  参数W1与a1做矩阵乘法
-        a2 = sigmoid(z2)  # 对矩阵z2进行做sigmoid激活
-        a2 = add_row(a2)  # 为第一层隐藏层的矩阵a2增加一列值为1的偏置
-        z3 = np.dot(W2,a2)  # 参数W2与a2做矩阵乘法
-        a3 = sigmoid(z3)  # 对矩阵z3做sigmoid激活
-        a3 = add_row(a3)  # 为第二层隐藏层的矩阵a3增加一列值为1的偏置
-        z4 = np.dot(W3,a3)  # 参数W3与a3做矩阵乘法
-        a4 = sigmoid(z4)  # 对矩阵z4做sigmoid激活
-
+        a1, a2, a3, a4, z2, z3, z4 = nn_fp_proc(X, W1, W2, W3)
         # Back propagation 需要补全
-        y_m = np.transpose(np.reshape(y, [-1, 1])) #reshape y_m from (n,)to (1,n)
-        delta4 = a4 - y_m  # 计算delta4，将预测标签向量a4与y_m做差
-        #print(sigmoidGradient(z3).shape)
-        A3 = np.dot(W3.T,delta4) # A3第一行元素为偏置层
-        delta3 = np.multiply(np.delete(A3,0,axis=0),sigmoidGradient(z3)) # 计算delta3，参数矩阵W3转置后与delta4做矩阵乘法，然后与sigmoidGradient(z3)对应位相乘
-        #print(delta3.shape)
-        A2 = np.dot(W2.T,delta3)
-        delta2 = np.multiply(np.delete(A2,0,axis=0),sigmoidGradient(z2))  # 计算delta2，参数矩阵W2转置后与delta3做矩阵乘法，然后与sigmoidGradient(z2)对应位相乘
-
-        # 计算Dij/Wij
-        delta4 = np.array(delta4)
-        a3 = np.array(a3)
-        # bigDelta3 = delta4 * a3.T # 点乘
-        bigDelta3 = np.dot(delta4, a3.T) # 矩阵乘
-        DW3 = 1./m * bigDelta3
-        W3 += -Config.lr * DW3
-        
-        bigDelta2 = np.dot(delta3, a2.T)
-        DW2 = 1./m * bigDelta2
-        W2 += -Config.lr * DW2
-        
-        bigDelta1 = np.dot(delta2, a1.T)
-        DW1 = 1./m * bigDelta1
-        W1 += -Config.lr * DW1
+        DW1, DW2, DW3 = nn_bp_proc(y, m, a1, a2, a3, a4, z2, z3, z4, W1, W2, W3)
+        W1, W2, W3 = nn_update_param(W1, W2, W3, DW1, DW2, DW3)
 
         # Assign new parameters to the model
         model = {'W1': W1, 'W2': W2, 'W3': W3}  #模型的键值对分别对应更新后的参数W1 W2 W3
-
         # Optionally print the loss.
         # This is expensive because it uses the whole dataset, so we don't want to do it too often.
         if print_loss and t % 1000 == 0:  #如果print_loss 与 t是1000的整数倍同时为True，运行下面代码
-            print("Loss after iteration %i: %f" % (t, calculate_loss(model, X_m, y_m)))   #格式化打印语句，输出迭代t次后，损失值是多少
-            logFile.write("Loss after iteration %i: %f" % (t, calculate_loss(model, X_m, y_m)))  # 将输出语句写入日志文件
+            print("Loss after iteration %i: %f" % (t, calculate_loss(model, X, y_m)))   #格式化打印语句，输出迭代t次后，损失值是多少
+            logFile.write("Loss after iteration %i: %f" % (t, calculate_loss(model, X, y_m)))  # 将输出语句写入日志文件
             logFile.write("\n")
-            result = precision(model, X_m)  #调用precision函数，返回预测结果
+            result = precision(model, X)  #调用precision函数，返回预测结果
             print("Traning Set Accuracy: {:f}".format((np.mean(result == y) * 100)))  #计算准确率
             logFile.write("Traning Set Accuracy: {:f}".format((np.mean(result == y) * 100)))  # 将输出语句写入日志文件
             logFile.write("\n")  # 换行
     logFile.close()  # 关闭文件
 
     return model  # 返回模型，实际是返回模型更新后的参数
+
 
 def main():
     # load data 加载数据
@@ -289,3 +265,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
