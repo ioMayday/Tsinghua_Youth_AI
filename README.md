@@ -7,6 +7,7 @@
 - 仓名：Tsinghua_Youth_AI
 - 课程：青年AI自强计划_清华大学(王明哲)
 - 作用：课程学习总结及练习源码分享
+- B站视频：[课程链接](https://www.bilibili.com/video/BV1Bb411L7jT/)
 
 ## 课程目录
 
