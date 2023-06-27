@@ -6,6 +6,7 @@ import cv2  # 导入cv2模块，cv2模块的安装采用指令conda install open
 import tensorflow as tf  # 导入tensorflow模块
 import pandas as pd  # 导入panda模块，重命名为pd
 import numpy as np  # 导入numpy模块，重命名为np
+import time  # 导入time模块
 
 # train&test file name
 trainfile = "./train.csv"  # 训练文件地址
@@ -16,7 +17,7 @@ BATCH_SIZE = 10 # 样本大小50
 EPOCHS = 10 # 一次训练轮数
 MODEL_NAME = 'model_bianry_dog_dnn.h5'
 batch_size = 128  # 一个batch中的样本数量为128
-learning_rate = 0.1  # 学习率为0.1
+lr = 0.1  # 学习率为0.1
 decay_rate = 0.8     # 学习率衰为0.8
 epochs = 10  # 数据集通过训练模型的次数，也可称为训练次数
 sample_size = 1000  # 总体样本抽样个数
@@ -55,25 +56,49 @@ def loadImg(imgPath):
     return imageData  # 返回图片数据和标记
 
 
+# 搭建网络结构
+def net():
+    nn = tf.keras.models.Sequential([
+        tf.keras.layers.Flatten(), # 将输入层样本铺平展开
+        tf.keras.layers.Dense(1024,
+                              kernel_initializer=tf.keras.initializers.glorot_uniform(seed=None),
+                              bias_initializer=tf.keras.initializers.Zeros(),
+                              activation="relu", input_dim=imageSize),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dense(2048,
+                              kernel_initializer=tf.keras.initializers.glorot_uniform(seed=None),
+                              bias_initializer=tf.keras.initializers.Zeros(),
+                              activation="relu"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dense(2048,
+                              kernel_initializer=tf.keras.initializers.glorot_uniform(seed=None),
+                              bias_initializer=tf.keras.initializers.Zeros(),
+                              activation="relu"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dense(1024,
+                              kernel_initializer=tf.keras.initializers.glorot_uniform(seed=None),
+                              bias_initializer=tf.keras.initializers.Zeros(),                              
+                              activation="relu"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dense(1,
+                            #   kernel_initializer=tf.keras.initializers.glorot_uniform(seed=None),
+                            #   bias_initializer=tf.keras.initializers.Zeros(),
+                              activation='sigmoid'),
+    ])
+    return nn
+
+
 # 训练一个二分类器确定是否为狗狗
 def train(trainImgP, trainlabel):
+    total_start = time.perf_counter()  # 将当前时间写入total_start
     # 搭建网络模型
-    keras_model = tf.keras.models.Sequential([
-        tf.keras.layers.Flatten(), # 将输入层样本铺平展开
-        tf.keras.layers.Dense(1024, activation="relu", input_dim=imageSize),
-        tf.keras.layers.Dense(2048, activation="relu"),
-        tf.keras.layers.Dense(2048, activation="relu"),
-        tf.keras.layers.Dense(1024, activation="relu"),
-        tf.keras.layers.Dense(1, activation=None),
-    ])
+    keras_model = net()
     # 二分类问题
-    sgd = tf.keras.optimizers.SGD(lr=learning_rate, momentum=0.0, decay=decay_rate, nesterov=False)
-    keras_model.compile(optimizer=sgd,
+    # sgd = tf.keras.optimizers.SGD(learning_rate=lr, momentum=0.0, decay=decay_rate, nesterov=False)
+    adam = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.999, epsilon=None, decay=decay_rate, amsgrad=False)
+    keras_model.compile(optimizer=adam,
                 loss='binary_crossentropy',
                 metrics=['accuracy'])
-    # keras_model.compile(optimizer='rmsprop',
-    #             loss='binary_crossentropy',
-    #             metrics=['accuracy'])
 
     # 训练模型
     keras_model.fit(trainImgP, trainlabel, epochs=EPOCHS, batch_size=BATCH_SIZE) # trainlabel已经是one-hot
@@ -82,6 +107,10 @@ def train(trainImgP, trainlabel):
     print(test_loss, test_acc)
     # 保存模型
     keras_model.save(MODEL_NAME)
+    total_end = time.perf_counter()  # 将当前时间放入total_end中
+    time_duration = total_end - total_start
+    str_time_epochs = 'total epochs:{0} takes time :{1:.2f} s'.format(EPOCHS, time_duration)
+    print(str_time_epochs)  # 打印结果
     return
 
 
