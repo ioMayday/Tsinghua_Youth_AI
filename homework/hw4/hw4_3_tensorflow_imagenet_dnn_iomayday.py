@@ -15,10 +15,11 @@ testfile = "./test.csv"  # 测试文件地址
 BATCH_SIZE = 10 # 样本大小50
 EPOCHS = 10 # 一次训练轮数
 MODEL_NAME = 'model_bianry_dog_dnn.h5'
-batch_size = 10  # 一个batch中的样本数量为128
-lr = 0.1  # 学习率为0.1
+batch_size = 128  # 一个batch中的样本数量为128
+learning_rate = 0.1  # 学习率为0.1
+decay_rate = 0.8     # 学习率衰为0.8
 epochs = 10  # 数据集通过训练模型的次数，也可称为训练次数
-sample_size = 100  # 总体样本抽样个数
+sample_size = 1000  # 总体样本抽样个数
 imageSize = 227 * 227  # 图片尺寸为227*227=51529
 
 
@@ -66,9 +67,13 @@ def train(trainImgP, trainlabel):
         tf.keras.layers.Dense(1, activation=None),
     ])
     # 二分类问题
-    keras_model.compile(optimizer='rmsprop',
+    sgd = tf.keras.optimizers.SGD(lr=learning_rate, momentum=0.0, decay=decay_rate, nesterov=False)
+    keras_model.compile(optimizer=sgd,
                 loss='binary_crossentropy',
                 metrics=['accuracy'])
+    # keras_model.compile(optimizer='rmsprop',
+    #             loss='binary_crossentropy',
+    #             metrics=['accuracy'])
 
     # 训练模型
     keras_model.fit(trainImgP, trainlabel, epochs=EPOCHS, batch_size=BATCH_SIZE) # trainlabel已经是one-hot
@@ -103,8 +108,10 @@ def test_model():
     testImgP, testlabel = loadImgPath(testfile)  # 导入测试数据与标注
 
     # 图片形状调整
-    trainImgpData, trainlabel = shape_size(trainImgP, trainlabel, trainImgP.shape[0])
-    testImgpData, testlabel = shape_size(testImgP, testlabel, testImgP.shape[0])
+    # trainImgpData, trainlabel = shape_size(trainImgP, trainlabel, trainImgP.shape[0])
+    # testImgpData, testlabel = shape_size(testImgP, testlabel, testImgP.shape[0])
+    trainImgpData, trainlabel = shape_size(trainImgP, trainlabel, sample_size)
+    testImgpData, testlabel = shape_size(testImgP, testlabel, sample_size)
 
     # 训练
     train(trainImgpData, trainlabel)
