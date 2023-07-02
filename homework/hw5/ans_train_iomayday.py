@@ -10,18 +10,33 @@ import numpy as np  # 导入numpy模块，重命名为np
 import time  # 导入time模块
 from ans_data_iomayday import get_data_set
 
+# 支持GPU和本地调参设置
+GPU_USE = 0
+DEBUG_MODE = 1
+
+if GPU_USE == 1:
+  # GPU服务器相关设置
+  import os
+  os.environ["CUDA_VISIBLE_DEVICES"] = "0,1" # 开启GPU加速
+
 
 # 基本训练超参设置
-BATCH_SIZE = 10 # 样本大小50
-EPOCHS = 10 # 一次训练轮数
 MODEL_NAME = 'model_cifar10_cnn.h5'
-batch_size = 128  # 一个batch中的样本数量为128
 lr = 0.1  # 学习率为0.1
 decay_rate = 0.8     # 学习率衰为0.8
-epochs = 10  # 数据集通过训练模型的次数，也可称为训练次数
-sample_size = 100  # 总体样本抽样个数
-imageSize = 227 * 227  # 图片尺寸为227*227=51529
 image_input_shape = []
+
+
+if DEBUG_MODE == 1:
+  # debug
+  BATCH_SIZE = 10 # 样本大小50
+  EPOCHS = 10 # 一次训练轮数
+  sample_size = 1000  # 总体样本抽样个数
+else:
+  # release
+  BATCH_SIZE = 32
+  EPOCHS = 100 # 一次训练轮数
+  sample_size = 10000  # 总体样本抽样个数
 
 
 # 读取数据
@@ -85,9 +100,10 @@ def train(trainImgP, trainlabel):
     keras_model = net()
     # 二分类问题
     # sgd = tf.keras.optimizers.SGD(learning_rate=lr, momentum=0.0, decay=decay_rate, nesterov=False)
-    adam = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.999, epsilon=None, decay=decay_rate, amsgrad=False)
-    keras_model.compile(optimizer=adam,
-                loss='binary_crossentropy',
+    opt = tf.keras.optimizers.legacy.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.999, epsilon=None, decay=decay_rate, amsgrad=False)
+    # opt = tf.keras.optimizers.legacy.RMSprop(learning_rate=0.0001, decay=1e-6)
+    keras_model.compile(optimizer=opt,
+                loss='categorical_crossentropy',
                 metrics=['accuracy'])
 
     # 训练模型
@@ -122,13 +138,24 @@ def shape_size(x, y, sample_size):
 def test_model():
     # 下载数据
     train_x, train_y, test_x, test_y = loadData()  # 调用loadData()函数，返回训练与测试数据集
+    print('x_train shape:', train_x.shape)
+    print(train_x.shape[0], 'train samples')
+    print(test_x.shape[0], 'test samples')    
+    train_x /= 255
+    test_x /= 255
+
     _IMAGE_SIZE = train_x.shape[0]  # train_x的第一个维度赋值给_IMAGE_SIZE，样本的总个数
+    print(_IMAGE_SIZE)
+    _IMAGE_SIZE = test_x.shape[0]  # train_x的第一个维度赋值给_IMAGE_SIZE，样本的总个数
+    print(_IMAGE_SIZE)
     global image_input_shape
     image_input_shape = train_x.shape[1:] # 单个样本的维度大小，如一张RGB图
-    
-    # 开发调试缩减数据量
-    train_x, train_y = shape_size(train_x, train_y, sample_size)
-    test_x, test_y = shape_size(test_x, test_y, sample_size)
+    print(image_input_shape)
+
+    if DEBUG_MODE == 1:
+      # 开发调试缩减数据量
+      train_x, train_y = shape_size(train_x, train_y, sample_size)
+      # test_x, test_y = shape_size(test_x, test_y, sample_size)
 
     # 训练
     train(train_x, train_y)
