@@ -11,8 +11,8 @@ import time  # 导入time模块
 from ans_data_iomayday import get_data_set
 
 # 支持GPU和本地调参设置
-GPU_USE = 0
-DEBUG_MODE = 1
+GPU_USE = 1
+DEBUG_MODE = 0
 
 if GPU_USE == 1:
   # GPU服务器相关设置
@@ -23,7 +23,7 @@ if GPU_USE == 1:
 # 基本训练超参设置
 MODEL_NAME = 'model_cifar10_cnn.h5'
 lr = 0.1  # 学习率为0.1
-decay_rate = 0.8     # 学习率衰为0.8
+decay_rate = 0.001     # 学习率衰减
 image_input_shape = []
 
 
@@ -34,9 +34,8 @@ if DEBUG_MODE == 1:
   sample_size = 1000  # 总体样本抽样个数
 else:
   # release
-  BATCH_SIZE = 32
-  EPOCHS = 100 # 一次训练轮数
-  sample_size = 10000  # 总体样本抽样个数
+  BATCH_SIZE = 128
+  EPOCHS = 50 # 一次训练轮数
 
 
 # 读取数据
