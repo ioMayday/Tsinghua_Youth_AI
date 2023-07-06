@@ -44,9 +44,10 @@
 
 ## 相关资料
 
+1. 青年AI自强计划-计算机视觉课程总体介绍，[link](https://www.itmsf.com/thread-1332-1-1.html)
+1. 『青年AI自强计划』第6章视觉分类任务课件，[link](https://blog.csdn.net/abc13526222160/article/details/88823566)
+1. 『青年AI自强计划』第7章视觉探测任务课件，[link](https://blog.csdn.net/abc13526222160/article/details/88839961)
 1. 相关GitHub仓：[Tsinghua-AI-Class](https://github.com/stsaten6/Tsinghua-AI-Class)，[AIstudy](https://github.com/yywwann/AIstudy)，[Youth-AI-SelfImprovement](https://github.com/knowmefly/Youth-AI-SelfImprovement)
-2. 『青年AI自强计划』第6章视觉分类任务课件，[link](https://blog.csdn.net/abc13526222160/article/details/88823566)
-3. 『青年AI自强计划』第7章视觉探测任务课件，[link](https://blog.csdn.net/abc13526222160/article/details/88839961)
 
 
 
