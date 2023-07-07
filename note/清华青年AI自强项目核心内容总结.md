@@ -93,13 +93,14 @@
 主要讲了分类任务中的IMAGENET挑战赛中涌现出的优秀模型，各种模型的核心工作是做不同姿势的卷积，走两条路：
 
 - 提高精度
-    - leNet5，起点，CNN，tanh激活
+    - LeNet5，起点，CNN，tanh激活
     - AlexNet2012，深度神经网络与大数据的首次触电，用relu加深了网络，用GPU训练起了大数据
     - ZFNet2013，过渡版本，帮AlexNet调了超参，换了卷积参数
     - VGG2014，标准模块加堆叠，换7x7卷积为3x3卷积堆叠，降低了参数量（人懒机器累）
     - GoogleNet2014，inception，变得更宽，1x1卷积压缩通道数，nxn变1xn和nx1卷积核分解，超参变更多（人累机器爽）
     - ResNet2015，打破限制，超越人类。解决加深网络问题，多加一条直连的线，保证无效神经元层直通，此时卷积核参数为0
-    - SENet2016，集大成者，比赛停止。Squeeze和Excitation，1X1卷积提取通道的影响，单独接个全连接网络，之后再叠加到下面的卷积网络。
+    - ResNeXt2016，ResNet Plus，融合GoogleNet和VGG更进一层
+    - SENet2017，集大成者，这届后比赛停止。Squeeze和Excitation，1X1卷积提取通道的影响，单独接个全连接网络，之后再叠加到下面的卷积网络。
 - 提高效率
     - 参数压缩
         - Deep Compression
