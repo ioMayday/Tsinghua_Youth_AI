@@ -34,13 +34,24 @@
     - hw5：基于CNN实现CIFAR10分类任务
 - 第6章，视觉分类任务
     - hw6：基于ResNet实现IMAGENET20分类任务
-
 - 第7章，视觉探测任务
+    - hw7：基于Yolo实现位置检测任务
+
 - 第8章，实例与调参
+    - 无资料
+
 
 ## 作业笔记
 
-- 青年AI自强作业2：线性回归预测，[link](https://blog.csdn.net/qq_17256689/article/details/124435599)
+- 文科生都能零基础学AI？清华这门免费课程让我信了，[link](https://blog.csdn.net/qq_17256689/article/details/123290351)
+- 清华青年AI自强作业hw2：线性回归预测，[link](https://blog.csdn.net/qq_17256689/article/details/124435599)
+- 清华青年AI自强作业hw3_1：用线性回归模型拟合MNIST手写数字分类，[link](https://blog.csdn.net/qq_17256689/article/details/131280024)
+- 清华青年AI自强作业hw3_2：前向传播和反向传播实战，[link](https://blog.csdn.net/qq_17256689/article/details/124435599)
+- 清华青年AI自强作业hw3_3：用NN网络拟合MNIST手写数字分类，[link](https://blog.csdn.net/qq_17256689/article/details/131280109)
+- 清华青年AI自强作业hw4：基于DNN实现狗狗二分类与梯度消失实验，[link](https://blog.csdn.net/qq_17256689/article/details/131424142)
+- 清华青年AI自强作业hw5：基于CNN实现CIFAR10分类任务，[link]( https://blog.csdn.net/qq_17256689/article/details/131501974)
+- 清华青年AI自强作业hw6：基于ResNet实现IMAGENET分类任务，[link](https://blog.csdn.net/qq_17256689/article/details/131605796)
+- 清华青年AI自强作业hw7：基于Yolo实现位置检测任务，[link](https://blog.csdn.net/qq_17256689/article/details/131736958)
 
 ## 相关资料
 
